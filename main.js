@@ -1,11 +1,39 @@
 javascript:(() => {
 
+VERSION = "1.0.0";
+
 if(document.getElementById("____settingDialog")){
-	alert("すでにある");
+	alert("すでに起動済みです。");
 	return;
 }
 
 const Settings = [
+	{
+		text: "デイリークエスト内の『変更する』ボタンを押せないようにする",
+		id: "____disabledReplaceAtDairyQuests",
+		style: `
+#QuestsBlock > table:nth-last-of-type(2) button[id*=replace_btn] {
+	opacity: 0.5;
+	pointer-events: none;
+}
+#QuestsBlock > table:nth-last-of-type(2) button[id*=replace_btn]:after {
+	content: "🐟️";
+}
+`,
+	},
+	{
+		text: "月間クエスト内の『変更する』ボタンを押せないようにする",
+		id: "____disabledReplaceAtMonthQuests",
+		style: `
+#QuestsBlock > table:nth-last-of-type(1) button[id*=replace_btn] {
+	opacity: 0.5;
+	pointer-events: none;
+}
+#QuestsBlock > table:nth-last-of-type(1) button[id*=replace_btn]:after {
+	content: "🐟️";
+}
+`,
+	},
 	{
 		text: "デイリークエスト内の『ダウングレード』ボタンを押せないようにする",
 		id: "____disabledDowngrade",
@@ -29,32 +57,41 @@ const Settings = [
 `,
 	},
 	{
-		text: "Replay Stepperを画面下部に追随させる",
+		text: "リプレイの操作バーを画面下部に追随させる",
 		id: "____stickyBottomReplayFooter",
 		style: `
-#replay_footer {
+#GameBlock:has(#result_block_box) #replay_footer {
 	position: sticky;
 	bottom: 0px;
 }
-#replay_play_btn,
-#replay_pause_btn{
+#GameBlock:has(#result_block_box) #replay_play_btn,
+#GameBlock:has(#result_block_box) #replay_pause_btn{
 	position: sticky;
 	left: 10px;
 	z-index: 100;
 }
-.replay-button-column:nth-of-type(3){
+#GameBlock:has(#result_block_box) .replay-button-column:nth-of-type(3){
 	position: sticky;
-	left: 40px;
+	left: 43px;
 	z-index: 100;
 }
-.replay-button-column:nth-of-type(4){
+#GameBlock:has(#result_block_box) .replay-button-column:nth-of-type(4){
 	position: sticky;
-	left: 70px;
+	left: 75px;
 	z-index: 100;
 }
 `,
 	},
 ];
+
+
+
+
+
+
+
+
+
 
 const Functions = [
 	{
@@ -228,7 +265,7 @@ document.body.append(Style);
 
 const openButton = document.createElement("button");
 openButton.type = "button";
-openButton.textContent = "🐟️設定🐟️";
+openButton.textContent = `🐟️設定🐟️（ver:${VERSION}）`;
 openButton.addEventListener("click", openDialog);
 document.body.append(openButton);
 
