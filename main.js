@@ -1,3 +1,10 @@
+javascript:(() => {
+
+if(document.getElementById("____settingDialog")){
+	alert("すでにある");
+	return;
+}
+
 const Settings = [
 	{
 		text: "デイリークエスト内の『ダウングレード』ボタンを押せないようにする",
@@ -89,6 +96,10 @@ Style.innerHTML = `
 	background-color: #111;
 	padding: 5%;
 	overflow-y: scroll;
+}
+#____settingDialog main section{
+	display: flex;
+	flex-direction: column;
 }
 #____settingDialog footer {
 	height: 10%;
@@ -238,3 +249,4 @@ function endScript(){
 
 
 
+})();
