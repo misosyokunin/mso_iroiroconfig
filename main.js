@@ -1,6 +1,6 @@
 javascript:(() => {
 
-VERSION = "2.0.0";
+VERSION = "2.1.0";
 
 if(document.getElementById("____settingDialog")){
 	alert("すでに起動済みです。");
@@ -14,10 +14,10 @@ const Settings = [
 		id: "____disabledNewGameWhenClickSmileIconSides",
 		isHtmlStyle: false,
 		style: `
-#top_area{
+#GameBlock:not(:has(#result_block_box)) #top_area{
 	pointer-events: none;
 }
-#top_area_face{
+#GameBlock:not(:has(#result_block_box)) #top_area_face{
 	pointer-events: auto;
 }
 `,
@@ -37,7 +37,7 @@ const Settings = [
 		id: "____showFishIconWhenEventQuestsMenuOnFriendEvent",
 		isHtmlStyle: false,
 		style: `
-body:has(.link_friend_quests .fa-circle) #header-new-icon span.header-icon-absolute > i:after {
+body:has(li.link_friend_quests .fa-circle) #header-new-icon span.header-icon-absolute > i:after {
 	content: "🐟️";
 }
 `,
@@ -144,6 +144,170 @@ const Functions = [
 
 ];
 
+const Scripts = {};
+{
+	const id = "____ScrollPageAtEquipment";
+	Scripts[id] = {
+		text: "装備のページで更新時に元のブロックに戻るようにする（仮称）",
+		detail: "",
+	};
+	Scripts[id]["script"] = function(){
+		if(!location.href.endsWith("/equipment")){
+			return;
+		}
+		const tar = event.target.closest("button");
+		if(tar?.tagName !== "BUTTON"){
+			return;
+		}
+		
+		/*名誉ショップのボタンは挙動が違うので、対応できません*/
+		if(!document.getElementById("EquipmentBlock").contains(tar)){
+			return;
+		}
+		
+		let blocks = document.querySelectorAll("#EquipmentBlock > :is(div, table)");
+		let parentNum = null;
+		for(let i = 0; i < blocks.length; i++){
+			const block = blocks[i];
+			if(block.querySelector("h2")){
+				parentNum = i;
+			}
+			if(block.contains(tar)){
+				break;
+			}
+		}
+		
+		let senni = false;
+		const target = document.body;
+		const observer = new MutationObserver(async (mutations) => {
+			const tar = mutations[0].target;
+/*
+				console.log(tar);
+*/
+				if(tar.classList.contains("modal") ||
+				   tar.classList.contains("modal-open")){
+					observer.disconnect();
+					return;
+				}
+				if(tar.id === "EquipmentBlock"){
+					if(senni){
+						blocks = document.querySelectorAll("#EquipmentBlock > :is(div, table)");
+						blocks[parentNum].scrollIntoView({  
+						  behavior: 'smooth'  
+						});
+						observer.disconnect();
+						return;
+					}
+					senni = true;
+				}
+		});
+		observer.observe(target, {
+ 			attributes: true, // 属性変化の監視
+ 			characterData: true,	/*テキストノードの変化を監視*/
+			childList: true,	/*子ノードの変化を監視*/
+			subtree: true,	/*子孫ノードも監視対象に含める*/
+		});
+	};
+	Scripts[id]["start"] = function(){
+		document.body.addEventListener("click", Scripts[id].script);
+	};
+	Scripts[id]["end"] = function(){
+		document.body.removeEventListener("click", Scripts[id].script);
+	};
+}
+{
+	const id = "____addSendQuestButtonInFriendsEvent";
+	Scripts[id] = {
+		text: "友好イベントのクエスト送付を、チャットのプレイヤー名をクリックした時のメニューから行えるようにする",
+		detail: "",
+		observer: null,
+		addItemClass: "___sakanaScript1",
+	},
+	Scripts[id]["script"] = function(){
+		if(!location.href.endsWith("/chat")){
+			return;
+		}
+		const tar = event.target;
+		if(!tar.closest("#chat_messages")){
+			return;
+		}
+		const dropdown = tar.closest("span.dropdown");
+		if(!dropdown){
+			return;
+		}
+		const menu = dropdown.querySelector(":scope > ul.dropdown-menu > li");
+		if(!menu){
+			return;
+		}
+		
+		const toSendId = dropdown.querySelector("a[id*=player_link]").href.match(/\d+/)[0];
+		if(!menu.querySelector(`.${Scripts[id]["addItemClass"]}`)){
+			const addItem = document.createElement("a");
+			addItem.classList.add(Scripts[id]["addItemClass"]);
+			addItem.textContent = "🐟️クエストを贈る";
+			addItem.href = "javascript: void(0)";
+			addItem.addEventListener("click", () => {
+				navigate('friend-quests');
+				
+				const target = document.body;
+				Scripts[id]["observer"] = new MutationObserver(async (mutations) => {
+					const tar = mutations[0].target;
+/*
+						console.log(tar);
+*/
+						if(!location.href.endsWith("/friend-quests")){
+							Scripts[id]["observer"].disconnect();
+/*
+							console.log("乙");
+*/
+							return;
+						}
+						if(tar.id === "send_quest_content"){
+							const form = tar.querySelector("#user_autocomplete");
+							if(form){
+								form.value = toSendId;
+								tar.querySelector("button").click(); /*決定ボタンを自動で*/
+							}
+						}
+/*
+
+贈るボタンを押した
+<div id="send_quest_content"><div class="text-center"><div class="send-quest-option"><a href="javascript:void(0)"><img src="/img/events/friend/dice.svg" class="icon-friend-dice">ランダムなオンラインプレイヤーを選択する</a> <span title="" class="help mediumgray" data-original-title="ランダムなプレイヤーにクエストを送ると、他のプレイヤーからクエストを受け取る確率が高くなります。"><i class="fa fa-question-circle-o"></i></span></div><div class="send-quest-option"><a href="javascript:void(0)"><img src="/img/events/friend/user.svg" class="icon-friend-user">ID/ユーザー名でプレイヤーを選択する</a></div><div class="send-quest-option">お気に入りの連絡先</div><div class="send-quest-option"><div><a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>aquacat／medium😻</span></a>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>akim</span></a>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>smiley_eff,exp,gem,AC</span></a>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>3156(Shima)</span></a>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>SkyBerryFields (Eff, Passives)</span></a>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>Hape｜pvp,int</span></a>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0)" class="text-nowrap-inline"><img src="/img/flags/jp.png" class="player-flag" alt="JP"><span>Clematis(NF,exp,cus)</span></a>&nbsp;&nbsp;&nbsp;</div></div></div></div>
+IDユーザー名でを押す
+<div id="send_quest_content"><div id="SearchBlock"><div id="SearchBlock_error_message" class="alert alert-danger hide"></div><div class="form-horizontal"><div class="form-group form-group-player-info"><div class="col-xs-5 control-label"><strong>プレイヤーID/ユーザー名を選択：</strong></div><div class="col-xs-5"><input id="user_autocomplete" class="form-control" autocomplete="off"></div></div><div class="form-group form-group-player-info"><div class="col-xs-5 control-label"></div><div class="col-xs-5"><br><button class="btn btn-primary"><i class="fa fa-chevron-circle-right"></i> 決定</button></div></div></div></div></div>
+
+
+*/
+
+				});
+				Scripts[id]["observer"].observe(target, {
+		 			attributes: true, // 属性変化の監視
+		 			characterData: true,	/*テキストノードの変化を監視*/
+					childList: true,	/*子ノードの変化を監視*/
+					subtree: true,	/*子孫ノードも監視対象に含める*/
+				});
+				
+				
+				return false;
+			});
+			menu.append(addItem);
+		}
+		
+		
+		return;
+	};
+	Scripts[id]["start"] = function(){
+		document.body.addEventListener("click", Scripts[id].script);
+		/*iframeを作る*/
+	};
+	Scripts[id]["end"] = function(){
+		document.body.removeEventListener("click", Scripts[id].script);
+		/*iframeを消す*/
+		Scripts[id]["observer"]?.disconnect();
+		Array.from(document.querySelectorAll(`.${Scripts[id]["addItemClass"]}`)).forEach((ele) => ele.remove());
+	};
+}
+
 const Hotkeys = [
 	{
 		text: "チャットのショートカットキーを有効にする",
@@ -160,12 +324,12 @@ const Hotkeys = [
 				Array.from(document.querySelectorAll("#chat_messages > div:not([style*=none]) .chat-remove-icon")).at(-1)?.click();
 			}
 			if(e.code === "Enter"){
-				if(document.getElementById("ConfirmDialog").getAttribute("style").match("display: block")){
+				if(document.getElementById("ConfirmDialog").getAttribute("style")?.match("display: block")){
 					document.getElementById("ConfirmDialog_ok_btn").click();
 				}
 			}
 			if(e.code === "Escape"){
-				if(document.getElementById("ConfirmDialog").getAttribute("style").match("display: block")){
+				if(document.getElementById("ConfirmDialog").getAttribute("style")?.match("display: block")){
 					document.getElementById("ConfirmDialog_cancel_btn").click();
 				}
 			}
@@ -306,6 +470,42 @@ document.body.append(Dialog);
 				label.append(span);
 				const addStyle = list.isHtmlStyle ? `html:has(#${list.id}:checked)${list.style}` : `html:has(#${list.id}:checked){${list.style}}`;
 				Style.innerHTML += addStyle;
+			});
+		}
+		{
+			const section = document.createElement("section");
+			main.append(section);
+			const h2 = document.createElement("h2");
+			h2.textContent = "スクリプト";
+			section.append(h2);
+			Object.entries(Scripts).forEach(([key, list]) => {
+				const label = document.createElement("label");
+				section.append(label);
+				const checkbox = document.createElement("input");
+				checkbox.type = "checkbox";
+				checkbox.checked = MyStorage.get(key) ?? false;
+				checkbox.id = key;
+				checkbox.addEventListener("change", () => {
+					const tar = event.currentTarget;
+					MyStorage.set(tar.id, tar.checked);
+					MyStorage.save();
+					tar.toggleFunction(tar.checked);
+				});
+				checkbox.toggleFunction = function(boo){
+					if(boo){
+						list.start();
+					}else{
+						list.end();
+					}
+				};
+				checkbox.toggleFunction(checkbox.checked);
+				label.append(checkbox);
+				const span = document.createElement("span");
+				span.textContent = list.text;
+				label.append(span);
+				const p = document.createElement("p");
+				p.innerHTML = list.detail;
+				label.append(p);
 			});
 		}
 		{
