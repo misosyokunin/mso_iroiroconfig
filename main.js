@@ -12,114 +12,136 @@ const Settings = [
 	{
 		text: "ニコちゃんマークの両サイドをクリックした場合に新規ゲームに遷移しないようにする",
 		id: "____disabledNewGameWhenClickSmileIconSides",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 #GameBlock:not(:has(#result_block_box)) #top_area{
 	pointer-events: none;
 }
+`,
+`
 #GameBlock:not(:has(#result_block_box)) #top_area_face{
 	pointer-events: auto;
 }
 `,
+		],
 	},
 	{
 		text: "【モバイル】サイト内でオーバースクロールを無効にする",
 		id: "____disabledOverScrollBehavior",
-		isHtmlStyle: true,
-		style: `
+		style: [
+`
 {
 	overscroll-behavior: none;
 }
 `,
+		],
 	},
 	{
 		text: "【モバイル】友好イベントで「イベントクエスト」の欄に赤丸🔴が点いている場合、ドロワーメニューボタンに特別なアイコンを表示する",
 		id: "____showFishIconWhenEventQuestsMenuOnFriendEvent",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 body:has(li.link_friend_quests .fa-circle) #header-new-icon span.header-icon-absolute > i:after {
 	content: "🐟️";
 }
 `,
+		],
 	},
 	{
 		text: "デイリークエスト内の『変更する』ボタンを押せないようにする",
 		id: "____disabledReplaceAtDairyQuests",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 #QuestsBlock > table:nth-last-of-type(2) button[id*=replace_btn] {
 	opacity: 0.5;
 	pointer-events: none;
 }
+`,
+`
 #QuestsBlock > table:nth-last-of-type(2) button[id*=replace_btn]:after {
 	content: "🐟️";
 }
 `,
+		],
 	},
 	{
 		text: "月間クエスト内の『変更する』ボタンを押せないようにする",
 		id: "____disabledReplaceAtMonthQuests",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 #QuestsBlock > table:nth-last-of-type(1) button[id*=replace_btn] {
 	opacity: 0.5;
 	pointer-events: none;
 }
+`,
+`
 #QuestsBlock > table:nth-last-of-type(1) button[id*=replace_btn]:after {
 	content: "🐟️";
 }
 `,
+		],
 	},
 	{
 		text: "デイリークエスト内の『ダウングレード』ボタンを押せないようにする",
 		id: "____disabledDowngrade",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 #QuestsBlock button[id*=downgrade_btn] {
 	opacity: 0.5;
 	pointer-events: none;
 }
+`,
+`
 #QuestsBlock button[id*=downgrade_btn]:after {
 	content: "🐟️";
 }
 `,
+		],
 	},
 	{
 		text: "自分用メモ内の「削除メッセージ」を非表示にする",
 		id: "____hiddenDeletedMessageInMyMemo",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 #ChatBlock:has(#chat_tabs > .active img[src="/img/chat/notes.svg"]) #chat_messages > div > div:has(td:nth-of-type(2) span.gray) {
 	display: none;
 }
 `,
+		],
 	},
 	{
 		text: "リプレイの操作バーを画面下部に追随させる",
 		id: "____stickyBottomReplayFooter",
-		isHtmlStyle: false,
-		style: `
+		style: [
+`
 #GameBlock:has(#result_block_box) #replay_footer {
 	position: sticky;
 	bottom: 0px;
 }
+`,
+`
 #GameBlock:has(#result_block_box) #replay_play_btn,
 #GameBlock:has(#result_block_box) #replay_pause_btn{
 	position: sticky;
 	left: 10px;
 	z-index: 100;
 }
+`,
+`
 #GameBlock:has(#result_block_box) .replay-button-column:nth-of-type(3){
 	position: sticky;
 	left: 43px;
 	z-index: 100;
 }
+`,
+`
 #GameBlock:has(#result_block_box) .replay-button-column:nth-of-type(4){
 	position: sticky;
 	left: 75px;
 	z-index: 100;
 }
 `,
+		],
 	},
 ];
 
@@ -468,8 +490,10 @@ document.body.append(Dialog);
 				const span = document.createElement("span");
 				span.textContent = list.text;
 				label.append(span);
-				const addStyle = list.isHtmlStyle ? `html:has(#${list.id}:checked)${list.style}` : `html:has(#${list.id}:checked){${list.style}}`;
-				Style.innerHTML += addStyle;
+				list.style.forEach((code) => {
+					const addStyle = `html:has(#${list.id}:checked)${code}`;
+					Style.innerHTML += addStyle;
+				});
 			});
 		}
 		{
