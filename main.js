@@ -1,6 +1,6 @@
 javascript:(() => {
 
-VERSION = "2.1.0";
+VERSION = "2.2.0";
 
 if(document.getElementById("____settingDialog")){
 	alert("すでに起動済みです。");
@@ -333,7 +333,7 @@ IDユーザー名でを押す
 const Hotkeys = [
 	{
 		text: "チャットのショートカットキーを有効にする",
-		detail: "<kbd>D</kbd>最後の自分のメッセージの削除ボタンを押す<br/><kbd>Enter</kbd>削除ダイアログで「OK」を押す<br/><kbd>Escape</kbd>削除ダイアログで「キャンセル」を押す",
+		detail: "<kbd>D</kbd>最後の自分のメッセージの削除ボタンを押す<br/><kbd>F</kbd>メッセージボックスにフォーカスする<br/><kbd>Enter</kbd>削除ダイアログで「OK」を押す<br/><kbd>Escape</kbd>削除ダイアログで「キャンセル」を押す",
 		id: "hotkeysAtChat",
 		script: function(e){
 			if(!location.href.endsWith("/chat")){
@@ -344,6 +344,10 @@ const Hotkeys = [
 			}
 			if(e.code === "KeyD"){
 				Array.from(document.querySelectorAll("#chat_messages > div:not([style*=none]) .chat-remove-icon")).at(-1)?.click();
+			}
+			if(e.code === "KeyF"){
+				event.preventDefault();
+				document.getElementById("chat_new_message").focus();
 			}
 			if(e.code === "Enter"){
 				if(document.getElementById("ConfirmDialog").getAttribute("style")?.match("display: block")){
