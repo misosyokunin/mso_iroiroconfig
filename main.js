@@ -1,6 +1,6 @@
 javascript:(() => {
 
-VERSION = "2.2.0";
+VERSION = "2.3.0";
 
 if(document.getElementById("____settingDialog")){
 	alert("すでに起動済みです。");
@@ -241,7 +241,7 @@ const Scripts = {};
 	const id = "____addSendQuestButtonInFriendsEvent";
 	Scripts[id] = {
 		text: "友好イベントのクエスト送付を、チャットのプレイヤー名をクリックした時のメニューから行えるようにする",
-		detail: "",
+		detail: "🐟️マークのメニューを押す→イベントクエストのページに遷移される→「✉️贈る」を押した先のダイアログで「ID/ユーザー名でプレイヤーを選択する」を押すことで、自動で入力+確認画面まで遷移するようになります。",
 		observer: null,
 		addItemClass: "___sakanaScript1",
 	},
@@ -326,6 +326,104 @@ IDユーザー名でを押す
 		document.body.removeEventListener("click", Scripts[id].script);
 		/*iframeを消す*/
 		Scripts[id]["observer"]?.disconnect();
+		Array.from(document.querySelectorAll(`.${Scripts[id]["addItemClass"]}`)).forEach((ele) => ele.remove());
+	};
+}
+{
+	const id = "____addCopyChatMessage";
+	Scripts[id] = {
+		text: "チャットのメッセージコピーを、チャットのプレイヤー名をクリックした時のメニューから行えるようにする",
+		detail: "今日のメッセージであってもタイムスタンプを一緒にコピーします。",
+		addItemClass: "___sakanaScript2",
+	},
+	Scripts[id]["script"] = function(){
+		if(!location.href.endsWith("/chat")){
+			return;
+		}
+		const tar = event.target;
+		if(!tar.closest("#chat_messages")){
+			return;
+		}
+		const dropdown = tar.closest("span.dropdown");
+		if(!dropdown){
+			return;
+		}
+		const menu = dropdown.querySelector(":scope > ul.dropdown-menu > li");
+		if(!menu){
+			return;
+		}
+		
+		const toSendId = dropdown.querySelector("a[id*=player_link]").href.match(/\d+/)[0];
+		if(!menu.querySelector(`.${Scripts[id]["addItemClass"]}`)){
+			const addItem = document.createElement("a");
+			addItem.classList.add(Scripts[id]["addItemClass"]);
+			addItem.textContent = "🐙️メッセージをコピーする";
+			addItem.href = "javascript: void(0)";
+			addItem.addEventListener("click", () => {
+				const tar = event.currentTarget;
+				const msgTable = tar.closest("table");
+				const tds = msgTable.querySelectorAll(":scope > tbody > tr > td");
+				
+				const putText = [];
+				{/*メッセージ発信時刻*/
+					const msgDate = tds[0].textContent;
+					const msgdate = [...msgDate.matchAll(/\d+/g)];
+					const nowd = new Date();
+					const YYYY = nowd.getFullYear();
+					const MM = String(nowd.getMonth() + 1).padStart(2, "0");
+					const DD = String(nowd.getDate()).padStart(2, "0");
+					let timestamp = [];
+					switch(msgdate.length){
+						case 6:
+							timestamp = msgdate;
+							break;
+						case 5:
+							timestamp = [YYYY].concat(msgdate);
+							break;
+						default:	/*時刻のみを想定*/
+							timestamp = [YYYY, MM, DD].concat(msgdate);
+							break;
+					}
+					putText.push(`${timestamp[0]}年 ${timestamp[1]}月 ${timestamp[2]}日,${timestamp[3]}:${timestamp[4]}:${timestamp[5]}`);
+				}
+				{/*発信者名*/
+					const playeranc = tds[1].querySelector("a[id*=player_link_]");
+					const playername = playeranc.textContent;
+					putText.push(playername);
+				}
+				{/*発信者ID*/
+					const playeranc = tds[1].querySelector("a[id*=player_link_]");
+					const playerid = playeranc.href.match(/\d+/)[0];
+					putText.push(playerid);
+				}
+				{/*発信内容*/
+					const msgcontent = tds[1].querySelector(":scope > span.chat-message-text").textContent;
+					putText.push(msgcontent);
+				}
+				
+				console.log(putText);
+				const textarea = document.createElement("textarea");
+				textarea.textContent = `#${putText[0]}\t${putText[1]}\t${putText[2]}\n${putText[3]}`;
+				document.body.append(textarea);
+				textarea.select();
+				document.execCommand("copy");
+				alert("コピーしました！😊");
+				textarea.remove();
+				
+				tar.remove();
+			});
+			menu.append(addItem);
+		}
+		
+		
+		return;
+	};
+	Scripts[id]["start"] = function(){
+		document.body.addEventListener("click", Scripts[id].script);
+		/*iframeを作る*/
+	};
+	Scripts[id]["end"] = function(){
+		document.body.removeEventListener("click", Scripts[id].script);
 		Array.from(document.querySelectorAll(`.${Scripts[id]["addItemClass"]}`)).forEach((ele) => ele.remove());
 	};
 }
